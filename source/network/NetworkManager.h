@@ -2,6 +2,7 @@
 
 #include "pico/cyw43_arch.h"
 #include "lwip/ip_addr.h"
+#include "PW.h"
 
 #define NET_MQTT 1
 
