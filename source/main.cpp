@@ -8,6 +8,8 @@
 #include <string.h>
 #include <math.h>
 
+#include "PW.h"
+
 #include "Cert.h"
 #include "home_assistant/HomeAssistant.h"
 #include "home_assistant/JSON/Discovery.h"

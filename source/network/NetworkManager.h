@@ -11,7 +11,7 @@
 #define NET_DNS 1
 #define NET_SNTP 1
 
-#include "Wifi_PW.h"
+
 
 #ifdef __cplusplus
 extern "C" {
