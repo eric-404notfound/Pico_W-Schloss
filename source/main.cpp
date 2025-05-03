@@ -49,7 +49,7 @@ int main(){
     start_sntp();
     
     HomeAssistant_MQTT mqtt_client("192.168.0.54", 1883, "Pico2W_Lock_Haustuer");
-    mqtt_client.setUsernamePassword("mqtt_devices","iqefSYh@u2@yo5T7");
+    mqtt_client.setUsernamePassword(MQTT_USERNAME, MQTT_PASSWORD);
     mqtt_client.connect();
     mqtt_client.registerHandler("HomeAutomation/lock/Haustuer/command", lock_callback, (void*)&mqtt_client);
     mqtt_client.publish(discovery_topic, entity_type);
