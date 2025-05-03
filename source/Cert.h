@@ -1,6 +1,8 @@
 
 #pragma once
 
+
+// Eigenes Cert einfügen
 const char CERTIFICATE[] =
 "-----BEGIN CERTIFICATE-----\n"
 "MIIEnjCCAwagAwIBAgIRAKOgqOfqPQ6sESeHjaYUeTgwDQYJKoZIhvcNAQELBQAw\n"

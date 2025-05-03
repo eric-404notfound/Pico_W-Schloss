@@ -11,6 +11,8 @@
 #define NET_DNS 1
 #define NET_SNTP 1
 
+#define WIFI_SSID "SSID" // 
+#define WIFI_PASSWORD  "PASSWORD" //
 #include "Wifi_PW.h"
 
 #ifdef __cplusplus
