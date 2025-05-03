@@ -11,9 +11,7 @@
 #define NET_DNS 1
 #define NET_SNTP 1
 
-
-#define WIFI_SSID "FRITZ!Box 7490" // 
-#define WIFI_PASSWORD  "59338213651541279818" //
+#include "Wifi_PW.h"
 
 #ifdef __cplusplus
 extern "C" {
