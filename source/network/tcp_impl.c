@@ -85,7 +85,7 @@
                 printf("Speicherzuweisung fehlgeschlagen\n");
                 return NULL;
             }
-            client->tls_config = altcp_tls_create_config_client((const u8_t*)Cert, sizeof(Cert));
+            client->tls_config = altcp_tls_create_config_client(Cert, strlen(Cert) + 1);
             if (!client->tls_config) {
                 printf("TLS-Config konnte nicht erstellt werden\n");
                 free(client);

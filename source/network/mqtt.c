@@ -27,7 +27,7 @@ MQTT_CLIENT_DATA_T* new_mqtt_client(const char* host, uint16_t port, const char 
 
     state->mqtt_server_address = ip;
     state->mqtt_server_port = port;
-
+    state->hostname = host;
 
 
     state->mqtt_client_inst = mqtt_client_new();
@@ -44,7 +44,7 @@ MQTT_CLIENT_DATA_T* new_mqtt_client(const char* host, uint16_t port, const char 
         return NULL;
     }
     strcpy(clid, client_id);
-    state->mqtt_client_info.client_id = client_id;
+    state->mqtt_client_info.client_id = clid;
 
     return state;
 }
@@ -81,19 +81,39 @@ void free_mqtt_client(MQTT_CLIENT_DATA_T *state) {
     }
 }
 
+void mbedtls_debug(void *ctx, int level, const char *file, int line, const char *str) {
+    printf("mbedTLS [%d] %s:%d: %s", level, file, line, str);
+}
+
 void start_client(MQTT_CLIENT_DATA_T *state, mqtt_connection_cb_t connectin_change_cb, mqtt_incoming_publish_cb_t mqtt_incoming_publish_cb, mqtt_incoming_data_cb_t mqtt_incoming_data_cb, void* arg) {
+
+
 
     cyw43_arch_lwip_begin();
     if (mqtt_client_connect(state->mqtt_client_inst, &state->mqtt_server_address, state->mqtt_server_port, connectin_change_cb, arg, &state->mqtt_client_info) != ERR_OK) {
         panic("MQTT broker connection error");
     }
+    if(mbedtls_ssl_set_hostname(altcp_tls_context(state->mqtt_client_inst->conn), state->hostname) != 0) {
+        printf("Hostname set error\n");
+    }
 
-    #if NET_MQTT_TLS && NET_TCP_TLS
-        // This is important for MBEDTLS_SSL_SERVER_NAME_INDICATION
-        mbedtls_ssl_set_hostname(altcp_tls_context(state->mqtt_client_inst->conn), MQTT_SERVER);
-    #endif
     mqtt_set_inpub_callback(state->mqtt_client_inst, mqtt_incoming_publish_cb, mqtt_incoming_data_cb, arg);
     cyw43_arch_lwip_end();
     }
 
+    #ifdef NET_TCP_TLS
+    void mqtt_set_tls_config(MQTT_CLIENT_DATA_T *state, const char* cert) {
+        printf("Zurzeit wird das Certifikat nicht überprüft aber in Arbeit \n");
+        state->mqtt_client_info.tls_config = altcp_tls_create_config_client(cert, strlen(cert) + 1);
+
+        mbedtls_ssl_conf_dbg(state->mqtt_client_info.tls_config, mbedtls_debug, NULL);
+        mbedtls_debug_set_threshold(4); // 0=aus, 4=voll
+        #if 0
+            tls_config = altcp_tls_create_config_client(cert, strlen(cert) + 1);
+            assert(tls_config);
+            mbedtls_ssl_conf_authmode(&tls_config->conf, MBEDTLS_SSL_VERIFY_REQUIRED);
+            state->mqtt_client_info.tls_config = tls_config;
+        #endif
+    }
+    #endif
 #endif

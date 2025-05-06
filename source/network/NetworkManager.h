@@ -2,6 +2,7 @@
 
 #include "pico/cyw43_arch.h"
 #include "lwip/ip_addr.h"
+
 #include "PW.h"
 
 #define NET_MQTT 1
@@ -45,6 +46,7 @@ bool connect_wifi();
 
     struct altcp_tls_config; // Forward-Deklaration für C
     typedef struct altcp_tls_config altcp_tls_config;
+    static struct altcp_tls_config *tls_config = NULL;
 
     typedef struct TCP_CLIENT_T_ {
         struct altcp_pcb *pcb;
@@ -87,20 +89,20 @@ bool connect_wifi();
         struct mqtt_connect_client_info_t mqtt_client_info;
         ip_addr_t mqtt_server_address;
         uint16_t mqtt_server_port;
+        const char * hostname;
         bool connected;
-
-        char data[MQTT_OUTPUT_RINGBUF_SIZE];
-        char topic[MQTT_TOPIC_LEN];
-        uint32_t len;
-        
-        int subscribe_count;
         bool stop_client;
+        
     } MQTT_CLIENT_DATA_T;
 
     MQTT_CLIENT_DATA_T* new_mqtt_client(const char *host, uint16_t port, const char *client_id);
     void free_mqtt_client(MQTT_CLIENT_DATA_T *state);
     void start_client(MQTT_CLIENT_DATA_T *state, mqtt_connection_cb_t connectin_change_cb, mqtt_incoming_publish_cb_t mqtt_incoming_publish_cb, mqtt_incoming_data_cb_t mqtt_incoming_data_cb, void* arg);
     void mqtt_set_username_password(MQTT_CLIENT_DATA_T *state, const char *username, const char *password);
+    #ifdef NET_TCP_TLS
+        void mqtt_set_tls_config(MQTT_CLIENT_DATA_T *state, const char* cert);
+    #endif
+
 #endif
 
 #ifdef __cplusplus

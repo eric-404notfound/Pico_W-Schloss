@@ -10,7 +10,6 @@
 
 #include "PW.h"
 
-#include "Cert.h"
 #include "home_assistant/HomeAssistant.h"
 #include "home_assistant/JSON/Discovery.h"
 
@@ -75,10 +74,12 @@ int main(){
     
     start_sntp();
     
-    HomeAssistant_MQTT mqtt_client("192.168.0.54", 1883, "Pico2W_Lock_Haustuer");
+    HomeAssistant_MQTT mqtt_client("192.168.0.54", 8883, "Pico2W_Lock_Haustuer");
     mqtt_client.setUsernamePassword(MQTT_USERNAME, MQTT_PASSWORD);
-    mqtt_client.connect();
+    mqtt_client.set_tls_config(CERTIFICATE_MQTT);
     mqtt_client.registerHandler("HomeAutomation/lock/Haustuer/command", lock_callback, (void*)&mqtt_client);
+    mqtt_client.connect();
+    
     mqtt_client.publish(discovery_topic, entity_type);
     mqtt_client_public = &mqtt_client;
     gpio_put(15, 0);

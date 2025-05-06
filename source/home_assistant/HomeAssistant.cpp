@@ -5,6 +5,12 @@
 
 namespace HomeAssistant_Wrapper {
 
+    int64_t reconect_callback(alarm_id_t id, void* arg) {
+        HomeAssistant_MQTT* home = (HomeAssistant_MQTT*)arg;
+        MQTT_CLIENT_DATA_T* mqtt_client = home->get_mqtt_client();
+        home->connect();
+        return 0;
+    }
     
     void publish_callback(void* arg, err_t err) {
 
@@ -49,12 +55,15 @@ namespace HomeAssistant_Wrapper {
         handler(handlerstrukt.arg, (char*)data, len);
     }
 
+    static int reconnect_try = 0;
     void connect_callback(mqtt_client_t* client, void* arg, mqtt_connection_status_t status) {
         HomeAssistant_MQTT* home = (HomeAssistant_MQTT*)arg;
         MQTT_CLIENT_DATA_T* mqtt_client = home->get_mqtt_client();
         if (status == 0) {
             printf("MQTT client connected\n");
             mqtt_client->connected = true;
+            reconnect_try = 0;
+            home->registerHandlers();
         }else if (status == 1) {
             printf("MQTT_CONNECT_REFUSED_PROTOCOL_VERSION\n");
             mqtt_client->connected = false;
@@ -72,6 +81,10 @@ namespace HomeAssistant_Wrapper {
             mqtt_client->connected = false;
         } else if (status == 256) {
             printf("MQTT_CONNECT_DISCONNECTED\n");
+            if (reconnect_try < 5) {
+                add_alarm_in_ms(2000, reconect_callback, arg, true);
+            }
+            reconnect_try++;
             mqtt_client->connected = false;
         } else if (status == 257) {
             printf("MQTT_CONNECT_TIMEOUT\n");
@@ -125,21 +138,43 @@ void HomeAssistant_MQTT::registerHandler(const char *_topic, mqtt_handler_fn_t _
     
     for (int i = 0; i < MAX_MQTT_HANDLERS; i++) {
         if (handlers[i].topic == NULL || strcmp(handlers[i].topic, _topic) == 0) {
+
             handlers[i].topic = new char[strlen(_topic) + 1];
             strcpy(handlers[i].topic, _topic);
+
             handlers[i].handler = _handler;
             handlers[i].arg = _arg;
+
+            if(mqtt_client->connected == false) {
+                return;
+            }
+
             char *callback_info = (char *)calloc(strlen(_topic) + 1, sizeof(char));
             strcpy(callback_info, _topic);
 
-            if (mqtt_sub_unsub(mqtt_client->mqtt_client_inst, _topic, 0, HomeAssistant_Wrapper::subscribe_callback, (void*)callback_info, 1) != ERR_OK) 
+            if (mqtt_sub_unsub(mqtt_client->mqtt_client_inst, _topic, 0, HomeAssistant_Wrapper::subscribe_callback, (void*)callback_info, 1) != ERR_OK){
                 printf("Error subscribing to topic: %.100s\n", _topic);
-            
-
+                free(callback_info);
+            }
             return;
         }
     }
     printf("No free handler slot available\n");
+};
+
+void HomeAssistant_MQTT::registerHandlers() {
+    for (int i = 0; i < MAX_MQTT_HANDLERS; i++) {
+        if (handlers[i].topic != NULL) {
+
+            char *callback_info = (char *)calloc(strlen(handlers[i].topic) + 1, sizeof(char));
+            strcpy(callback_info, handlers[i].topic);
+
+            if (mqtt_sub_unsub(mqtt_client->mqtt_client_inst, handlers[i].topic, 0, HomeAssistant_Wrapper::subscribe_callback, (void*)callback_info, 1) != ERR_OK){
+                printf("Error subscribing to topic: %.100s\n", handlers[i].topic);
+                free(callback_info);
+            }
+        }
+    }
 };
 
 void HomeAssistant_MQTT::unregisterHandler(const char *_topic) {
@@ -196,7 +231,9 @@ void HomeAssistant_MQTT::publish(const char *_topic, const char *_payload) {
     }
     char *callback_info = new char[strlen(_topic) + 1];
     strcpy(callback_info, _topic);
+    cyw43_arch_lwip_begin();
     err_t err = mqtt_publish(this->mqtt_client->mqtt_client_inst, _topic, _payload, strlen(_payload), 0, 1, HomeAssistant_Wrapper::publish_callback, (void*)callback_info);
+    cyw43_arch_lwip_end();
     if (err != ERR_OK) {
         printf("Error publishing message: %d\n", err);
         printf("Topic: %.100s\n", _topic);
@@ -215,9 +252,7 @@ void HomeAssistant_MQTT::setUsernamePassword(const char *_username, const char *
 void HomeAssistant_MQTT::connect(){
 
     start_client(mqtt_client, HomeAssistant_Wrapper::connect_callback, HomeAssistant_Wrapper::incoming_publish_callback, HomeAssistant_Wrapper::incoming_data_callback, (void*)this);
-    for (int i = 0; i < 10; i++) {
-        sleep_ms(100);
-    }
+
 }
 
 void HomeAssistant_MQTT::set_incoming_topic(const char* topic) {
@@ -232,6 +267,9 @@ void HomeAssistant_MQTT::set_incoming_topic(const char* topic) {
     strncpy((char*)incoming_topic, topic, sizeof(incoming_topic));
     incoming_topic[sizeof(incoming_topic) - 1] = '\0'; // Null-terminate
 }
+void HomeAssistant_MQTT::set_tls_config(const char* cert){
+    mqtt_set_tls_config(mqtt_client, cert);
+}
 
 HomeAssistant_MQTT::~HomeAssistant_MQTT(){
     if (mqtt_client) {
@@ -239,3 +277,4 @@ HomeAssistant_MQTT::~HomeAssistant_MQTT(){
         mqtt_client = NULL;
     }
 }
+
