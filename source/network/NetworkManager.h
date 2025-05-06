@@ -88,9 +88,10 @@ bool connect_wifi();
         struct mqtt_connect_client_info_t mqtt_client_info;
         ip_addr_t mqtt_server_address;
         uint16_t mqtt_server_port;
+
         const char * hostname;
         bool connected;
-        bool stop_client;
+
         mbedtls_x509_crt cacert;
         
     } MQTT_CLIENT_DATA_T;
