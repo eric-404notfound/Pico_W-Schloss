@@ -81,9 +81,8 @@ void free_mqtt_client(MQTT_CLIENT_DATA_T *state) {
     }
 }
 
-void mbedtls_debug(void *ctx, int level, const char *file, int line, const char *str) {
-    printf("mbedTLS [%d] %s:%d: %s", level, file, line, str);
-}
+
+
 
 void start_client(MQTT_CLIENT_DATA_T *state, mqtt_connection_cb_t connectin_change_cb, mqtt_incoming_publish_cb_t mqtt_incoming_publish_cb, mqtt_incoming_data_cb_t mqtt_incoming_data_cb, void* arg) {
 
@@ -93,26 +92,57 @@ void start_client(MQTT_CLIENT_DATA_T *state, mqtt_connection_cb_t connectin_chan
     if (mqtt_client_connect(state->mqtt_client_inst, &state->mqtt_server_address, state->mqtt_server_port, connectin_change_cb, arg, &state->mqtt_client_info) != ERR_OK) {
         panic("MQTT broker connection error");
     }
-    if(mbedtls_ssl_set_hostname(altcp_tls_context(state->mqtt_client_inst->conn), state->hostname) != 0) {
-        printf("Hostname set error\n");
-    }
+    mbedtls_ssl_set_hostname(altcp_tls_context(state->mqtt_client_inst->conn), state->hostname);
 
     mqtt_set_inpub_callback(state->mqtt_client_inst, mqtt_incoming_publish_cb, mqtt_incoming_data_cb, arg);
     cyw43_arch_lwip_end();
     }
 
-    #ifdef NET_TCP_TLS
-    void mqtt_set_tls_config(MQTT_CLIENT_DATA_T *state, const char* cert) {
-        printf("Zurzeit wird das Certifikat nicht überprüft aber in Arbeit \n");
-        state->mqtt_client_info.tls_config = altcp_tls_create_config_client(cert, strlen(cert) + 1);
 
-        mbedtls_ssl_conf_dbg(state->mqtt_client_info.tls_config, mbedtls_debug, NULL);
-        mbedtls_debug_set_threshold(4); // 0=aus, 4=voll
-        #if 0
-            tls_config = altcp_tls_create_config_client(cert, strlen(cert) + 1);
-            assert(tls_config);
-            mbedtls_ssl_conf_authmode(&tls_config->conf, MBEDTLS_SSL_VERIFY_REQUIRED);
-            state->mqtt_client_info.tls_config = tls_config;
+
+#ifdef NET_TCP_TLS
+
+    void mbedtls_debug(void *ctx, int level, const char *file, int line, const char *str) {
+        printf("mbedTLS [%d] %s:%d: %s", level, file, line, str);
+    }
+    
+
+    int cert_verify_callback(void *data, mbedtls_x509_crt *crt, int depth, uint32_t *flags) {
+        const mbedtls_x509_crt *expected = (const mbedtls_x509_crt *)data;
+        printf("Zertifikatstiefe: %d\n", depth);
+        if (crt->raw.len == expected->raw.len &&
+            memcmp(crt->raw.p, expected->raw.p, crt->raw.len) == 0) {
+            *flags = 0; // Gültig
+            return 0;
+        } else {
+            *flags |= MBEDTLS_X509_BADCERT_NOT_TRUSTED;
+            return -1;
+        }
+    }
+
+
+    void mqtt_set_tls_config(MQTT_CLIENT_DATA_T *state, const char* cert) {
+        printf("Zurzeit wird das Certifikat nicht überprüft (Problem wird noch analysiert)\n");
+        
+        //state->mqtt_client_info.tls_config = altcp_tls_create_config_client(cert, strlen(cert) + 1);
+        state->mqtt_client_info.tls_config = altcp_tls_create_config_client(NULL, 0);
+
+        #ifdef ProblemBehoben
+            mbedtls_ssl_config* conf = altcp_tls_context(state->mqtt_client_info.tls_config);
+
+            mbedtls_ssl_conf_dbg(conf, mbedtls_debug, NULL);
+            mbedtls_debug_set_threshold(4); // 0=aus, 4=voll
+
+
+            
+            mbedtls_x509_crt_init(&state->cacert);
+            if (mbedtls_x509_crt_parse(&state->cacert, (const unsigned char*)cert, strlen(cert) + 1) != 0) {
+                printf("Zertifikat konnte nicht geparst werden\n");
+                return;
+            }
+
+            mbedtls_ssl_conf_verify(conf, cert_verify_callback, &state->cacert);
+            mbedtls_ssl_conf_authmode(conf, MBEDTLS_SSL_VERIFY_REQUIRED);
         #endif
     }
     #endif

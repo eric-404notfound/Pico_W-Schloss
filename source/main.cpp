@@ -41,8 +41,7 @@ void lock_callback(void* arg, char* payload, size_t len) {
 
         printf("Locking the door...\n");
         gpio_put(15, 0);
-        
-        // Add your lock logic here
+
     } else if (strncmp(payload, "UNLOCK", len) == 0) {
         if (!lock_timer) {
             lock_timer = true;
@@ -50,7 +49,6 @@ void lock_callback(void* arg, char* payload, size_t len) {
         }
         printf("Unlocking the door...\n");
         gpio_put(15, 1);
-        // Add your unlock logic here
     } else {
         printf("Unknown command: %.*s\n", (int)len, payload);
     }

@@ -46,7 +46,6 @@ bool connect_wifi();
 
     struct altcp_tls_config; // Forward-Deklaration für C
     typedef struct altcp_tls_config altcp_tls_config;
-    static struct altcp_tls_config *tls_config = NULL;
 
     typedef struct TCP_CLIENT_T_ {
         struct altcp_pcb *pcb;
@@ -92,6 +91,7 @@ bool connect_wifi();
         const char * hostname;
         bool connected;
         bool stop_client;
+        mbedtls_x509_crt cacert;
         
     } MQTT_CLIENT_DATA_T;
 
