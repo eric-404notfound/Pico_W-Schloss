@@ -28,13 +28,16 @@ file(GLOB_RECURSE EXTERNAL_INCLUDE_DIRS
 )
 
 
-
 add_executable(main
         ${SOURCES}
 )
 
+add_subdirectory(external/Networking-RPPico)
+add_subdirectory(external/HomeAssistand-RPPico)
+
 target_include_directories(main PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/source
+        ${CMAKE_CURRENT_SOURCE_DIR}/external
 )
 
 foreach(dir ${EXTERNAL_INCLUDE_DIRS})
@@ -51,11 +54,9 @@ pico_enable_stdio_uart(main ON)
 target_link_libraries(main
 
         pico_stdlib
-        pico_cyw43_arch_lwip_threadsafe_background
-        pico_lwip_sntp
-        pico_lwip_mqtt
-        pico_mbedtls
-        pico_lwip_mbedtls
+        Pico_HomeAssistant
+        Pico_Networking
+
 )
 
 pico_add_extra_outputs(main)

@@ -10,8 +10,9 @@
 
 #include "PW.h"
 
-#include "home_assistant/HomeAssistant.h"
-#include "home_assistant/JSON/Discovery.h"
+#include "../external/Networking-RPPico/NetworkManager.h"
+#include "../external/HomeAssistand-RPPico/HomeAssistant.h"
+#include "Discovery.h"
 
 #define NET_DNS 1
 
@@ -67,7 +68,7 @@ int main(){
     gpio_pull_down(14);
 
     
-    if(!connect_wifi())
+    if(!connect_wifi(WIFI_SSID, WIFI_PASSWORD))
         return -1;
     
     start_sntp();
