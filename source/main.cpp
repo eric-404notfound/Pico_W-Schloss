@@ -11,7 +11,7 @@
 #include "PW.h"
 
 #include "../external/Networking-RPPico/NetworkManager.h"
-#include "../external/HomeAssistand-RPPico/HomeAssistant.h"
+#include "../external/HomeAssistant-RPPico/HomeAssistant.h"
 #include "Discovery.h"
 
 #define NET_DNS 1

@@ -33,7 +33,7 @@ add_executable(main
 )
 
 add_subdirectory(external/Networking-RPPico)
-add_subdirectory(external/HomeAssistand-RPPico)
+add_subdirectory(external/HomeAssistant-RPPico)
 
 target_include_directories(main PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/source
