@@ -12,7 +12,6 @@
 
 #include "../external/Networking-RPPico/NetworkManager.h"
 #include "../external/HomeAssistant-RPPico/HomeAssistant.h"
-#include "Discovery.h"
 
 #define NET_DNS 1
 
@@ -57,6 +56,7 @@ void lock_callback(void* arg, char* payload, size_t len) {
 
 
 int main(){
+    sleep_ms(1000000);
 
     stdio_init_all();
     printf("\nHallo welt\n\n");
@@ -78,8 +78,6 @@ int main(){
     mqtt_client.set_tls_config(CERTIFICATE_MQTT);
     mqtt_client.registerHandler("HomeAutomation/lock/Haustuer/command", lock_callback, (void*)&mqtt_client);
     mqtt_client.connect();
-    
-    mqtt_client.publish(discovery_topic, entity_type);
     mqtt_client_public = &mqtt_client;
     gpio_put(15, 0);
     mqtt_client.publish("HomeAutomation/lock/Haustuer/state", "LOCKED");
