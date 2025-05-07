@@ -56,7 +56,6 @@ void lock_callback(void* arg, char* payload, size_t len) {
 
 
 int main(){
-    sleep_ms(1000000);
 
     stdio_init_all();
     printf("\nHallo welt\n\n");
