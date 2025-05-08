@@ -78,13 +78,12 @@ int main(){
     mqtt_client.registerHandler("HomeAutomation/lock/Haustuer/command", lock_callback, (void*)&mqtt_client);
     mqtt_client.connect();
     mqtt_client_public = &mqtt_client;
-    gpio_put(15, 0);
-    mqtt_client.publish("HomeAutomation/lock/Haustuer/state", "LOCKED");
+    gpio_callback(14,NULL);
     gpio_set_irq_enabled_with_callback(14, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &gpio_callback);
 
-    while(true) {
-        sleep_ms(100);
-    }
+    while(true)
+        sleep_ms(1000);
+    
 
     cyw43_arch_deinit();
     return 0;
